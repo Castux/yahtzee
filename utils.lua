@@ -1,3 +1,5 @@
+local serpent = require "serpent"
+
 --[[ Utilities ]]--
 
 local function memoize(func)
@@ -51,6 +53,17 @@ local function list_to_set(t)
 	return set
 end
 
+local function set_to_list(base, s)
+	local res = {}
+	
+	for i,v in ipairs(base) do
+		if s[v] then
+			table.insert(res, v)
+		end
+	end
+	return res
+end
+
 local function set_to_index(list, set)
 	local index = 0
 	
@@ -86,14 +99,32 @@ local function table_copy(t)
 	return copy
 end
 
+local function empty_set(s)
+	for k,v in pairs(s) do
+		return false
+	end
+	return true
+end
+
+local function dump(t, name)
+	
+	local str = serpent.block(t, { name = name, comment = false })
+	local fp = io.open("out/" .. name .. ".lua", "w")
+	fp:write(str)
+	fp:close()
+end
+
 return
 {
 	memoize = memoize,
 	subset = subset,
 	subsets = subsets,
 	list_to_set = list_to_set,
+	set_to_list = set_to_list,
 	string_to_numbers = string_to_numbers,
 	sort_string = sort_string,
 	set_to_index = set_to_index,
-	table_copy = table_copy
+	table_copy = table_copy,
+	empty_set = empty_set,
+	dump = dump
 }
