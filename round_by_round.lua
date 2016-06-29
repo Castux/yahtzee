@@ -40,9 +40,9 @@ function compute(phase, upper_score, dice, allowed_boxes, next_results)
 			local score = yahtzee.score(dice, box)
 
 			-- upper bonus?
-
+			local new_upper_score = upper_score
 			if yahtzee.is_upper_box(box) then
-				local new_upper_score = math.min(63, upper_score + score)
+				new_upper_score = math.min(63, upper_score + score)
 
 				if upper_score < 63 and new_upper_score == 63 then
 					score = score + 35
