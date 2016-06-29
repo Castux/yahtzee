@@ -143,15 +143,14 @@ local function score(throw, box)
 	return 0
 end
 
-local all_scores = utils.memoize(function(throw)
-	
-	local scores = {}
-	for _,box in ipairs(boxes) do
-		scores[box] = score(throw, box)			
-	end
-
-	return scores
-end)
+local function is_upper_box(box)
+	return box == "ones" or
+		box == "twos" or
+		box == "threes" or
+		box == "fours" or
+		box == "fives" or
+		box == "sixes"
+end
 
 --[[ Module exports ]]--
 
@@ -161,5 +160,5 @@ return
 	roll = roll,
 	rerolls = rerolls,
 	score = score,
-	all_scores = all_scores
+	is_upper_box = is_upper_box
 }
