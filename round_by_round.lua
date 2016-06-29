@@ -40,11 +40,13 @@ function compute(phase, upper_score, dice, allowed_boxes, next_results)
 			local score = yahtzee.score(dice, box)
 
 			-- upper bonus?
+		
+			if yahtzee.is_upper_box(box) then
+				local new_upper_score = math.min(63, upper_score + score)
 
-			local new_upper_score = math.min(63, upper_score + score)
-
-			if upper_score < 63 and new_upper_score == 63 then
-				score = score + 35
+				if upper_score < 63 and new_upper_score == 63 then
+					score = score + 35
+				end
 			end
 
 			-- add the future expected value
@@ -112,44 +114,52 @@ local function run()
 	local results = {}
 	
 	local next_results = function(allowed_boxes, phase, upper_score, dice)
-		local hash = table.concat(utils.set_to_list(yahtzee.boxes, allowed_boxes), ",")
-		return results[hash][phase][upper_score][dice].value
+		local index = utils.set_to_index(yahtzee.boxes, allowed_boxes)
+		return results[index][phase][upper_score][dice].value
 	end
 	
 	local count = 0
+	local box_sets_by_count = {}
+	
 	for _,allowed_boxes in ipairs(box_sets) do
 		
 		local allowed_boxes_set = utils.list_to_set(allowed_boxes)
-		local boxes_hash = table.concat(allowed_boxes, ",")
 		local boxes_index = utils.set_to_index(yahtzee.boxes, allowed_boxes_set)
 		
-		results[boxes_hash] = {
-			boxes_hash = boxes_hash,
+		-- memory management: we need only the results for next round
+		
+		for i,v in ipairs(box_sets) do
+			if #v < #allowed_boxes - 1 then
+				results[table.concat(v, ",")] = nil
+			end
+		end
+		
+		-- new results
+		
+		results[boxes_index] = {
+			boxes_hash = table.concat(allowed_boxes, ","),
 			boxes_index = boxes_index
 		}
 		
 		for phase = 4,1,-1 do
 			
-			results[boxes_hash][phase] = {}
+			results[boxes_index][phase] = {}
 			
 			for upper_score = 0,63 do
 				
-				results[boxes_hash][phase][upper_score] = {}
+				results[boxes_index][phase][upper_score] = {}
 				
 				for dice,_ in pairs(yahtzee.roll("")) do
 					
 					local action, value = compute(phase, upper_score, dice, allowed_boxes_set, next_results)
-					--print(boxes_hash, phase, upper_score, dice, action, value)
-					
-					results[boxes_hash][phase][upper_score][dice] = { action = action, value = value }
+					results[boxes_index][phase][upper_score][dice] = { action = action, value = value }
 				end
 			end
 		end
 		
 		count = count + 1
-		utils.dump(results[boxes_hash], "boxes_" .. boxes_index)
-		print("Done with " .. boxes_hash, string.format("%.2f%%", count / #allowed_boxes * 100))
-		
+		utils.dump(results[boxes_index], "boxes_" .. boxes_index)
+		print("Done with " .. results[boxes_index].boxes_hash, string.format("%.2f%%", count / #box_sets * 100))		
 	end
 end
 
