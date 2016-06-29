@@ -1,5 +1,6 @@
 local yahtzee = require "yahtzee"
 local utils = require "utils"
+local storage = require "storage"
 
 -- Round by round computation
 
@@ -23,14 +24,14 @@ local utils = require "utils"
 -- allowed_boxes as a set {[box] = true}
 -- next_result as a function(allowed_boxes, round, upper_score, dice)
 
-function compute(phase, upper_score, dice, allowed_boxes, next_results)
+local function compute(phase, upper_score, dice, allowed_boxes, next_results)
 
 	local max_value = -1
 	local max_action
 
 	-- Scoring only
 
-	if phase == 4 then
+	if phase == 3 then
 
 
 		for box,_ in pairs(allowed_boxes) do
@@ -90,7 +91,7 @@ function compute(phase, upper_score, dice, allowed_boxes, next_results)
 
 			if future_value > max_value then
 				max_value = future_value
-				max_action = "keep " .. keep
+				max_action = keep
 			end
 		end
 
@@ -116,8 +117,13 @@ local function compute_for_boxes(allowed_boxes, results)
 		boxes_hash = table.concat(allowed_boxes, ","),
 		boxes_index = boxes_index
 	}
+	
+	local test1 = {}
+	local test2 = {}
+	
+	print("Starting " .. results[boxes_index].boxes_hash .. "...")
 
-	for phase = 4,1,-1 do
+	for phase = 3,0,-1 do
 
 		results[boxes_index][phase] = {}
 
@@ -129,57 +135,19 @@ local function compute_for_boxes(allowed_boxes, results)
 
 				local action, value = compute(phase, upper_score, dice, allowed_boxes_set, next_results)
 				results[boxes_index][phase][upper_score][dice] = { action = action, value = value }
+				
+				storage.set(test1, phase, upper_score, dice, action)
+				storage.set(test2, phase, upper_score, dice, value)
 			end
 		end
 	end
 
-	utils.dump(results[boxes_index], "boxes_" .. boxes_index)
-	print("Done with " .. results[boxes_index].boxes_hash)		
-
+	--utils.dump(results[boxes_index], "boxes_" .. boxes_index)
+	
+	utils.dump(test1, "actions_" .. boxes_index)
+	utils.dump(test2, "value_" .. boxes_index)
+	
+	print("Done with " .. results[boxes_index].boxes_hash)
 end
 
-
-local function run()
-
-	local box_sets = utils.subsets(yahtzee.boxes)
-	box_sets[0] = nil	-- remove the "no boxes" set
-
-	-- sort box sets by count
-
-	table.sort(box_sets, function(a,b)
-		return #a < #b
-	end)
-
-	local results = {}
-
-	-- load precomputed results
-
-	for i = 1,#box_sets do
-		local res = utils.load("boxes_" .. i)
-		if res then
-			results[i] = res
-		end
-	end
-
-	-- compute
-
-	for _,allowed_boxes in ipairs(box_sets) do
-
-		--[[ memory management: we need only the results for next round
-
-			for i,v in ipairs(box_sets) do
-				if #v < #allowed_boxes - 1 then
-					results[table.concat(v, ",")] = nil
-				end
-			end]]
-
-		local allowed_boxes_set = utils.list_to_set(allowed_boxes)
-		local boxes_index = utils.set_to_index(yahtzee.boxes, allowed_boxes_set)
-		
-		if not results[boxes_index] then
-			compute_for_boxes(allowed_boxes, results)
-		end
-	end
-end
-
-run()
+return { compute_for_boxes = compute_for_boxes }

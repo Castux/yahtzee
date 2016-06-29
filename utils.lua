@@ -108,17 +108,21 @@ end
 
 local function dump(t, name)
 	
-	local str = serpent.block(t, { name = name, comment = false })
+	local str = serpent.dump(t, { name = name, comment = false })
 	local fp = io.open("out/" .. name .. ".lua", "w")
 	fp:write(str)
 	fp:close()
 end
 
-local function load(name)
+local function load(name, just_check)
 	
 	local fp = io.open("out/" .. name .. ".lua", "r")
 	if not fp then
 		return nil
+	end
+	
+	if just_check then
+		return true
 	end
 
 	local str = fp:read("*a")
