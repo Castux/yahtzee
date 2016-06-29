@@ -114,6 +114,21 @@ local function dump(t, name)
 	fp:close()
 end
 
+local function load(name)
+	
+	local fp = io.open("out/" .. name .. ".lua", "r")
+	if not fp then
+		return nil
+	end
+
+	local str = fp:read("*a")
+	local ok, res = serpent.load(str)
+	if not ok then
+		error(res)
+	end
+	return res
+end
+
 return
 {
 	memoize = memoize,
@@ -126,5 +141,6 @@ return
 	set_to_index = set_to_index,
 	table_copy = table_copy,
 	empty_set = empty_set,
-	dump = dump
+	dump = dump,
+	load = load
 }
