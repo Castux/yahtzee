@@ -4,9 +4,9 @@ local storage = require "storage"
 
 -- Round by round computation
 
--- Each round is actually split in 4 phases (the rerolls)
+-- Each round is actually split in 3 phases (the rerolls)
 -- Between each phase you can reroll (keeping 0-5 dice)
--- After phase 4 you need to score
+-- After phase 3 you need to score
 
 -- During a round N, you have 14 - N boxes available among 13,
 -- or C(13,14-N) = C(13, N-1)
@@ -14,8 +14,8 @@ local storage = require "storage"
 -- In each phase there are 252 possible dice states, and 1+63 possible current upstairs scores,
 -- that is 16128 states.
 
--- There are 2^13 box states (-1 for the game over when all is full), and 4 rounds per phase so a grand total of
--- 528417792 states to compute. But since every action makes you move forward in phase and/or round,
+-- There are 2^13 box states (-1 for the game over when all is full), and 3 phases per round so a grand total of
+-- 396361728 states to compute. But since every action makes you move forward in phase and/or round,
 -- they can be nicely split by phase and computed backwards, saving only the optimal strategies.
 
 -- Check all possible actions, and compute their expected value thanks to the
@@ -31,7 +31,7 @@ local function compute(phase, upper_score, dice, allowed_boxes, next_results)
 
 	-- Scoring only
 
-	if phase == 3 then
+	if phase == 2 then
 
 
 		for box,_ in pairs(allowed_boxes) do
@@ -119,7 +119,7 @@ local function compute_for_boxes(allowed_boxes, values)
 	
 	print("Starting " .. boxes_index .. "...")
 
-	for phase = 3,0,-1 do
+	for phase = 2,0,-1 do
 
 		for upper_score = 0,63 do
 

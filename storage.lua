@@ -2,7 +2,7 @@ local yahtzee = require "yahtzee"
 local utils = require "utils"
 
 local num_boxes = 2 ^ #yahtzee.boxes
-local num_phases = 4
+local num_phases = 3
 local num_upper_scores = 64
 
 local rolls = {}
