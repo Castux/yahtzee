@@ -24,7 +24,7 @@ local storage = require "storage"
 -- allowed_boxes as a set {[box] = true}
 -- next_result as a function(allowed_boxes, round, upper_score, dice)
 
-local function compute(phase, upper_score, dice, allowed_boxes, next_results)
+local function compute(phase, upper_score, dice, box_set, next_results)
 
 	local max_value = -1
 	local max_action
@@ -34,7 +34,7 @@ local function compute(phase, upper_score, dice, allowed_boxes, next_results)
 	if phase == 2 then
 
 
-		for box,_ in pairs(allowed_boxes) do
+		for _,box in ipairs(yahtzee.box_set_list(box_set)) do
 
 			-- choosing this box gives us what reward?
 
@@ -52,15 +52,14 @@ local function compute(phase, upper_score, dice, allowed_boxes, next_results)
 
 			-- add the future expected value
 
-			local new_allowed_boxes = utils.table_copy(allowed_boxes)
-			new_allowed_boxes[box] = nil
+			local new_box_set = yahtzee.box_set_builder:remove(box_set, box)
 
 			local future_score = 0
 
-			if not utils.empty_set(new_allowed_boxes) then
+			if new_box_set ~= 0 then
 
 				for reroll,proba in pairs(yahtzee.roll("")) do
-					local value = next_results(new_allowed_boxes, 1, new_upper_score, reroll)
+					local value = next_results(new_box_set, 1, new_upper_score, reroll)
 					future_score = future_score + proba * value
 				end
 
@@ -85,7 +84,7 @@ local function compute(phase, upper_score, dice, allowed_boxes, next_results)
 			local future_value = 0
 
 			for rerolled,proba in pairs(outcomes) do
-				local value = next_results(allowed_boxes, phase + 1, upper_score, rerolled)
+				local value = next_results(box_set, phase + 1, upper_score, rerolled)
 				future_value = future_value + proba * value
 			end
 
@@ -101,23 +100,19 @@ local function compute(phase, upper_score, dice, allowed_boxes, next_results)
 
 end
 
-local function compute_for_boxes(allowed_boxes, values)
+local function compute_for_boxes(box_set, values)
 
-	local next_results = function(allowed_boxes, phase, upper_score, dice)
-		local index = utils.set_to_index(yahtzee.boxes, allowed_boxes)
-		return storage.get(values[index], phase, upper_score, dice)
+	local next_results = function(box_set, phase, upper_score, dice)
+		return storage.get(values[box_set], phase, upper_score, dice)
 	end
-
-	local allowed_boxes_set = utils.list_to_set(allowed_boxes)
-	local boxes_index = utils.set_to_index(yahtzee.boxes, allowed_boxes_set)
 
 	-- new results
 	
 	local actions = {}
 	local these_values = {}
-	values[boxes_index] = these_values
+	values[box_set] = these_values
 	
-	print("Starting " .. boxes_index .. "...")
+	print("Starting " .. box_set .. "...")
 
 	for phase = 2,0,-1 do
 
@@ -125,7 +120,7 @@ local function compute_for_boxes(allowed_boxes, values)
 
 			for dice,_ in pairs(yahtzee.roll("")) do
 
-				local action, value = compute(phase, upper_score, dice, allowed_boxes_set, next_results)
+				local action, value = compute(phase, upper_score, dice, box_set, next_results)
 				
 				storage.set(actions, phase, upper_score, dice, action)
 				storage.set(these_values, phase, upper_score, dice, value)
@@ -133,10 +128,10 @@ local function compute_for_boxes(allowed_boxes, values)
 		end
 	end
 
-	utils.dump(actions, "actions_" .. boxes_index)
-	utils.dump(these_values, "values_" .. boxes_index)
+	utils.dump(actions, "actions_" .. box_set)
+	utils.dump(these_values, "values_" .. box_set)
 	
-	print("Done with " .. boxes_index)
+	print("Done with " .. box_set)
 end
 
 return { compute_for_boxes = compute_for_boxes }

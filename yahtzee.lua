@@ -1,5 +1,6 @@
 local distribution = require "distribution"
 local utils = require "utils"
+local set_builder = require "set"
 
 --[[ Random rolling ]]--
 
@@ -51,6 +52,8 @@ local boxes =
 	"yahtzee",
 	"sum"
 }
+
+local box_set_builder = set_builder.new(boxes)
 
 local function counts(throw)
 
@@ -157,6 +160,8 @@ end
 return
 {
 	boxes = boxes,
+	box_set_builder = box_set_builder,
+	box_set_list = utils.memoize(function(set) return box_set_builder:elements(set) end),
 	roll = roll,
 	rerolls = rerolls,
 	score = score,

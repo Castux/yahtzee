@@ -3,6 +3,7 @@ local compute_for_boxes = require("round_by_round").compute_for_boxes
 local utils = require "utils"
 
 local function run(num_boxes, start, skip)
+	
 	print("Running: ", num_boxes, start, skip)
 	
 	local box_sets = utils.subsets(yahtzee.boxes)
@@ -10,23 +11,27 @@ local function run(num_boxes, start, skip)
 	-- sort box sets by count
 
 	local counts = {}
-	for i,v in ipairs(box_sets) do
-		counts[#v] = counts[#v] or {}
-		table.insert(counts[#v], v)
+	
+	for i = 0, yahtzee.box_set_builder.max_index do
+		
+		local list = yahtzee.box_set_list(i)
+		
+		counts[#list] = counts[#list] or {}
+		table.insert(counts[#list], i)
 	end
 
 	-- load relevant previous results
 
 	local values = {}
 	
-	for i,v in ipairs(box_sets) do
+	for i = 1,yahtzee.box_set_builder.max_index do
 		
-		if #v == num_boxes then
+		if i == num_boxes then
 			values[i] = utils.load("values_" .. i, true)
 			if values[i] then
 				print("Skipped " .. i)
 			end
-		elseif	#v == num_boxes - 1 then
+		elseif i == num_boxes - 1 then
 			values[i] = utils.load("values_" .. i)
 			if values[i] then
 				print("Loaded " .. i)
@@ -37,19 +42,17 @@ local function run(num_boxes, start, skip)
 	
 	-- compute
 
-	for i,allowed_boxes in ipairs(counts[num_boxes]) do
+	for i,box_set in ipairs(counts[num_boxes]) do
 		
 		if i % skip == start then
-			local allowed_boxes_set = utils.list_to_set(allowed_boxes)
-			local boxes_index = utils.set_to_index(yahtzee.boxes, allowed_boxes_set)
-
-			if not values[boxes_index] then
-				compute_for_boxes(allowed_boxes, values)
+			
+			if not values[box_set] then
+				compute_for_boxes(box_set, values)
 			end
 			
 			-- save memory
 			
-			values[boxes_index] = nil
+			values[box_set] = nil
 		end
 	end
 end
