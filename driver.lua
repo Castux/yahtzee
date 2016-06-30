@@ -23,10 +23,14 @@ local function run(num_boxes, start, skip)
 		
 		if #v == num_boxes then
 			values[i] = utils.load("values_" .. i, true)
-			print("Skipped " .. i)
+			if values[i] then
+				print("Skipped " .. i)
+			end
 		elseif	#v == num_boxes - 1 then
 			values[i] = utils.load("values_" .. i)
-			print("Loaded " .. i)
+			if values[i] then
+				print("Loaded " .. i)
+			end
 		end
 		
 	end
@@ -52,7 +56,5 @@ end
 
 -- Read command line
 
---a,b,c = ...
---run(tonumber(a),tonumber(b),tonumber(c))
-
-run(1,0,1)
+a,b,c = ...
+run(tonumber(a),tonumber(b),tonumber(c))

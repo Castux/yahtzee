@@ -101,53 +101,42 @@ local function compute(phase, upper_score, dice, allowed_boxes, next_results)
 
 end
 
-local function compute_for_boxes(allowed_boxes, results)
+local function compute_for_boxes(allowed_boxes, values)
 
 	local next_results = function(allowed_boxes, phase, upper_score, dice)
 		local index = utils.set_to_index(yahtzee.boxes, allowed_boxes)
-		return results[index][phase][upper_score][dice].value
+		return storage.get(values[index], phase, upper_score, dice)
 	end
 
 	local allowed_boxes_set = utils.list_to_set(allowed_boxes)
 	local boxes_index = utils.set_to_index(yahtzee.boxes, allowed_boxes_set)
 
 	-- new results
-
-	results[boxes_index] = {
-		boxes_hash = table.concat(allowed_boxes, ","),
-		boxes_index = boxes_index
-	}
 	
-	local test1 = {}
-	local test2 = {}
+	local actions = {}
+	local these_values = {}
+	values[boxes_index] = these_values
 	
-	print("Starting " .. results[boxes_index].boxes_hash .. "...")
+	print("Starting " .. boxes_index .. "...")
 
 	for phase = 3,0,-1 do
 
-		results[boxes_index][phase] = {}
-
 		for upper_score = 0,63 do
-
-			results[boxes_index][phase][upper_score] = {}
 
 			for dice,_ in pairs(yahtzee.roll("")) do
 
 				local action, value = compute(phase, upper_score, dice, allowed_boxes_set, next_results)
-				results[boxes_index][phase][upper_score][dice] = { action = action, value = value }
 				
-				storage.set(test1, phase, upper_score, dice, action)
-				storage.set(test2, phase, upper_score, dice, value)
+				storage.set(actions, phase, upper_score, dice, action)
+				storage.set(these_values, phase, upper_score, dice, value)
 			end
 		end
 	end
 
-	--utils.dump(results[boxes_index], "boxes_" .. boxes_index)
+	utils.dump(actions, "actions_" .. boxes_index)
+	utils.dump(these_values, "values_" .. boxes_index)
 	
-	utils.dump(test1, "actions_" .. boxes_index)
-	utils.dump(test2, "value_" .. boxes_index)
-	
-	print("Done with " .. results[boxes_index].boxes_hash)
+	print("Done with " .. boxes_index)
 end
 
 return { compute_for_boxes = compute_for_boxes }
