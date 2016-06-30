@@ -1,6 +1,6 @@
 local distribution = require "distribution"
 local utils = require "utils"
-local set_builder = require "set"
+local set_builder = require "set_builder"
 
 --[[ Random rolling ]]--
 

@@ -5,14 +5,12 @@ local utils = require "utils"
 local function run(num_boxes, start, skip)
 	
 	print("Running: ", num_boxes, start, skip)
-	
-	local box_sets = utils.subsets(yahtzee.boxes)
 
 	-- sort box sets by count and load/check existence
 
 	local counts = {}
 	local values = {}
-	
+
 	for i = 1, yahtzee.box_set_builder.max_index do
 		
 		local list = yahtzee.box_set_list(i)
