@@ -97,18 +97,6 @@ public static class Dice
 		return keep;
 	}
 
-	private static List<string> Keeps(string roll)
-	{
-		var result = new HashSet<string>();
-
-		for (byte keepPattern = 0; keepPattern < Math.Pow(2, roll.Length); keepPattern++)
-		{
-			var keep = Keep(roll, keepPattern);
-		}
-
-		return new List<string>(result);
-	}
-
 	public static byte[] Faces(string roll)
 	{
 		return roll.ToArray().Select(c => byte.Parse(c.ToString())).ToArray();
