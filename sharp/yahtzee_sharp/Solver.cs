@@ -13,7 +13,7 @@ public class Solver
 	public List<string> rolls;
 	public Dictionary<string, int> rollIndices;
 
-	public Dictionary<string, Dictionary<string, double>> rerolls;
+	public Dictionary<string, Dictionary<string, float>> rerolls;
 	public Dictionary<string, List<string>> keeps;
 	public Dictionary<string, Dictionary<Box, int>> scores;
 
@@ -27,7 +27,7 @@ public class Solver
 
 	private void ComputeStaticInfo()
 	{
-		rerolls = new Dictionary<string, Dictionary<string, double>>();
+		rerolls = new Dictionary<string, Dictionary<string, float>>();
 		keeps = new Dictionary<string, List<string>>();
 		scores = new Dictionary<string, Dictionary<Box, int>>();
 
@@ -86,7 +86,7 @@ public class Solver
 
 	public struct Result
 	{
-		public double value;
+		public float value;
 		public string action;
 	}
 
@@ -111,7 +111,7 @@ public class Solver
 
 		if (phase == 2)
 		{
-			double maxValue = -1;
+			float maxValue = -1;
 			Box? bestBox = null;
 
 			foreach (Box box in boxset.Contents)
@@ -136,7 +136,7 @@ public class Solver
 				var newBoxSet = boxset;
 				newBoxSet.Remove(box);
 
-				double futureScore = 0;
+				float futureScore = 0;
 
 				if (!newBoxSet.IsEmpty)
 				{
@@ -165,12 +165,12 @@ public class Solver
 
 		else
 		{
-			double maxValue = -1;
+			float maxValue = -1;
 			string bestKeep = null;
 
 			foreach (string keep in keeps[roll])
 			{
-				double futureScore = 0;
+				float futureScore = 0;
 
 				foreach (var reroll in rerolls[keep])
 				{

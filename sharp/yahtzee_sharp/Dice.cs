@@ -4,11 +4,11 @@ using System.Collections.Generic;
 
 public static class Dice
 {
-	private static Dictionary<string, double> Roll(int count)
+	private static Dictionary<string, float> Roll(int count)
 	{
-		var outcomes = new Dictionary<string, double>();
+		var outcomes = new Dictionary<string, float>();
 
-		var basicProba = 1.0 / Math.Pow(6, count);
+		var basicProba = (float)(1.0 / Math.Pow(6, count));
 
 		var faces = new byte[count];
 		for (int i = 0; i < faces.Length; i++)
@@ -22,7 +22,7 @@ public static class Dice
 			Array.Sort(clone);
 			var hash = string.Concat(clone);
 
-			double previous = 0;
+			float previous = 0;
 			outcomes.TryGetValue(hash, out previous);
 			outcomes[hash] = previous + basicProba;
 
@@ -54,9 +54,9 @@ public static class Dice
 		return new string(arr);
 	}
 
-	public static Dictionary<string, double> Reroll(string keep)
+	public static Dictionary<string, float> Reroll(string keep)
 	{
-		var outcomes = new Dictionary<string, double>();
+		var outcomes = new Dictionary<string, float>();
 
 		if (keep.Length == 5)
 		{
@@ -68,7 +68,7 @@ public static class Dice
 		{
 			var outcome = SortString(roll.Key + keep);
 
-			double previous = 0;
+			float previous = 0;
 			outcomes.TryGetValue(outcome, out previous);
 			outcomes[outcome] = previous + roll.Value;
 		}
