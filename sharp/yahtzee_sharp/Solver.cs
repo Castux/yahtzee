@@ -13,8 +13,7 @@ public class Solver
 	public List<string> rolls;
 	public Dictionary<string, int> rollIndices;
 
-	public Dictionary<string, Dictionary<string, float>> rerolls;
-	public Dictionary<string, List<string>> keeps;
+	private Dictionary<string, Dictionary<string, float>[]> rerolls;
 	public Dictionary<string, Dictionary<Box, int>> scores;
 
 	public List<List<BoxSet>> boxsets;
@@ -22,22 +21,14 @@ public class Solver
 
 	public Solver()
 	{
-		ComputeStaticInfo();
+		Compute2();
 	}
 
-	private void ComputeStaticInfo()
+	private void Compute2()
 	{
-		rerolls = new Dictionary<string, Dictionary<string, float>>();
-		keeps = new Dictionary<string, List<string>>();
-		scores = new Dictionary<string, Dictionary<Box, int>>();
-
-		// First all possible 5 dice rolls
-
-		rerolls[""] = Dice.Reroll("");
-
 		// Keep a flat index of rolls to use for later storage
 
-		rolls = rerolls[""].Keys.ToList();
+		rolls = Dice.FirstRoll().Keys.ToList();
 		rolls.Sort();
 
 		rollIndices = new Dictionary<string, int>();
@@ -46,17 +37,14 @@ public class Solver
 
 		// Then: rerolls and scores
 
+		rerolls = new Dictionary<string, Dictionary<string, float>[]>();
+		scores = new Dictionary<string, Dictionary<Box, int>>();
+
 		foreach (var roll in rolls)
 		{
 			// All rerolls
 
-			keeps[roll] = Dice.Keeps(roll);
-
-			foreach (var keep in keeps[roll])
-			{
-				if (!rerolls.ContainsKey(keep))
-					rerolls[keep] = Dice.Reroll(keep);
-			}
+			rerolls[roll] = Dice.Rerolls(roll);
 
 			// and scores
 
@@ -87,7 +75,7 @@ public class Solver
 	public struct Result
 	{
 		public float value;
-		public string action;
+		public byte action;
 	}
 
 	public const int NumPhases = 3;
@@ -140,7 +128,7 @@ public class Solver
 
 				if (!newBoxSet.IsEmpty)
 				{
-					foreach (var reroll in rerolls[""])
+					foreach (var reroll in rerolls[roll][0]) // reroll by keeping nothing
 					{
 						futureScore += reroll.Value * results[newBoxSet.bits][0, newUpperScore, rollIndices[reroll.Key]].value;
 					}
@@ -158,7 +146,7 @@ public class Solver
 
 			// Save result
 
-			results[boxset.bits][phase, upperScore, rollIndices[roll]] = new Result { action = boxIndices[bestBox.Value].ToString(), value = maxValue };
+			results[boxset.bits][phase, upperScore, rollIndices[roll]] = new Result { action = (byte)boxIndices[bestBox.Value], value = maxValue };
 		}
 
 		// Other phases: rerolling
@@ -166,13 +154,13 @@ public class Solver
 		else
 		{
 			float maxValue = -1;
-			string bestKeep = null;
+			byte bestKeepPattern = 0;
 
-			foreach (string keep in keeps[roll])
+			for (byte keepPattern = 0; keepPattern < Dice.NumRerollPatterns; keepPattern++)
 			{
 				float futureScore = 0;
 
-				foreach (var reroll in rerolls[keep])
+				foreach (var reroll in rerolls[roll][keepPattern])
 				{
 					futureScore += reroll.Value * results[boxset.bits][phase + 1, upperScore, rollIndices[reroll.Key]].value;
 				}
@@ -180,13 +168,13 @@ public class Solver
 				if (futureScore > maxValue)
 				{
 					maxValue = futureScore;
-					bestKeep = keep;
+					bestKeepPattern = keepPattern;
 				}
 			}
 
 			// Save result
 
-			results[boxset.bits][phase, upperScore, rollIndices[roll]] = new Result { action = bestKeep, value = maxValue };
+			results[boxset.bits][phase, upperScore, rollIndices[roll]] = new Result { action = bestKeepPattern, value = maxValue };
 		}
 	}
 
@@ -198,10 +186,10 @@ public class Solver
 			for (var upperScore = 0; upperScore < NumUpperScores; upperScore++)
 				foreach (var roll in rolls)
 					Solve(boxset, phase, upperScore, roll);
-		
+
 		DumpResult(boxset);
 
-		lock(this)
+		lock (this)
 		{
 			numBoxsetsSolved++;
 

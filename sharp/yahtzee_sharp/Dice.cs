@@ -4,6 +4,8 @@ using System.Collections.Generic;
 
 public static class Dice
 {
+	public const int NumRerollPatterns = 32; 
+
 	private static Dictionary<string, float> Roll(int count)
 	{
 		var outcomes = new Dictionary<string, float>();
@@ -54,8 +56,13 @@ public static class Dice
 		return new string(arr);
 	}
 
-	public static Dictionary<string, float> Reroll(string keep)
+	private static Dictionary<string, Dictionary<string, float>> rerollMemo = new Dictionary<string, Dictionary<string, float>>();
+
+	private static Dictionary<string, float> Reroll(string keep)
 	{
+		if (rerollMemo.ContainsKey(keep))
+			return rerollMemo[keep];
+
 		var outcomes = new Dictionary<string, float>();
 
 		if (keep.Length == 5)
@@ -73,24 +80,30 @@ public static class Dice
 			outcomes[outcome] = previous + roll.Value;
 		}
 
+		rerollMemo[keep] = outcomes; 
 		return outcomes;
 	}
 
-	public static List<string> Keeps(string roll)
+	private static string Keep(string roll, byte keepPattern)
+	{
+		var keep = "";
+
+		for (var j = 0; j < roll.Length; j++)
+		{
+			if ((keepPattern & (1 << j)) != 0)
+				keep += roll[j];
+		}
+
+		return keep;
+	}
+
+	private static List<string> Keeps(string roll)
 	{
 		var result = new HashSet<string>();
 
-		for (var i = 0; i < Math.Pow(2, roll.Length); i++)
+		for (byte keepPattern = 0; keepPattern < Math.Pow(2, roll.Length); keepPattern++)
 		{
-			var keep = "";
-
-			for (var j = 0; j < roll.Length; j++)
-			{
-				if ((i & (1 << j)) != 0)
-					keep += roll[j];
-			}
-
-			result.Add(keep);
+			var keep = Keep(roll, keepPattern);
 		}
 
 		return new List<string>(result);
@@ -99,5 +112,23 @@ public static class Dice
 	public static byte[] Faces(string roll)
 	{
 		return roll.ToArray().Select(c => byte.Parse(c.ToString())).ToArray();
+	}
+
+	public static Dictionary<string, float>[] Rerolls(string roll)
+	{
+		var result = new Dictionary<string, float>[NumRerollPatterns];
+
+		for (byte keepPattern = 0; keepPattern < NumRerollPatterns; keepPattern++)
+		{
+			var keep = Keep(roll, keepPattern);
+			result[keepPattern] = Reroll(keep);
+		}
+
+		return result;
+	}
+
+	public static Dictionary<string, float> FirstRoll()
+	{
+		return Reroll("");
 	}
 }
