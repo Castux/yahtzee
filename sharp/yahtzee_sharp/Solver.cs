@@ -158,17 +158,20 @@ public class Solver
 
 			for (byte keepPattern = 0; keepPattern < Dice.NumRerollPatterns; keepPattern++)
 			{
-				float futureScore = 0;
-
-				foreach (var reroll in rerolls[roll][keepPattern])
+				if (rerolls[roll][keepPattern] != null)
 				{
-					futureScore += reroll.Value * results[boxset.bits][phase + 1, upperScore, rollIndices[reroll.Key]].value;
-				}
+					float futureScore = 0;
 
-				if (futureScore > maxValue)
-				{
-					maxValue = futureScore;
-					bestKeepPattern = keepPattern;
+					foreach (var reroll in rerolls[roll][keepPattern])
+					{
+						futureScore += reroll.Value * results[boxset.bits][phase + 1, upperScore, rollIndices[reroll.Key]].value;
+					}
+
+					if (futureScore > maxValue)
+					{
+						maxValue = futureScore;
+						bestKeepPattern = keepPattern;
+					}
 				}
 			}
 

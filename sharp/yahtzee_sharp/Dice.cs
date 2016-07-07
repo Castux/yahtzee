@@ -105,11 +105,17 @@ public static class Dice
 	public static Dictionary<string, float>[] Rerolls(string roll)
 	{
 		var result = new Dictionary<string, float>[NumRerollPatterns];
+		var keeps = new HashSet<string>();
 
 		for (byte keepPattern = 0; keepPattern < NumRerollPatterns; keepPattern++)
 		{
 			var keep = Keep(roll, keepPattern);
-			result[keepPattern] = Reroll(keep);
+
+			if (!keeps.Contains(keep))
+			{
+				result[keepPattern] = Reroll(keep);
+				keeps.Add(keep);
+			}
 		}
 
 		return result;
