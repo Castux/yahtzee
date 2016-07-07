@@ -6,4 +6,3 @@
 		solver.Solve();
 	}
 }
-
