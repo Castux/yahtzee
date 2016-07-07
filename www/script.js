@@ -10,6 +10,8 @@ var total = 0;
 var boxset = 0;
 var round = 0;
 
+var rollIndices;
+
 function init()
 {
 	inputs = document.getElementsByClassName("scorebox");
@@ -36,6 +38,14 @@ function init()
 	actionboxes = document.getElementsByClassName("actionbox");
 
 	onScoresChanged();
+
+	rollIndices = {};
+	for (var i = 0; i < rolls.length; i++)
+	{
+		rollIndices[rolls[i]] = i;
+	};
+
+	console.log(rollIndices);
 }
 
 function onScoresChanged()
