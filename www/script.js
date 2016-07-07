@@ -44,8 +44,6 @@ function init()
 	{
 		rollIndices[rolls[i]] = i;
 	};
-
-	console.log(rollIndices);
 }
 
 function onScoresChanged()
@@ -137,7 +135,7 @@ function onRollboxChanged(index)
 
 	fetchAction(step, str, function(action)
 	{
-		actionboxes[index].innerHTML = action.length;
+		actionboxes[index].innerHTML = action;
 	});
 }
 
@@ -147,7 +145,22 @@ function fetchAction(step, roll, cb)
 	fetchURL(url, function(txt)
 	{
 		var arr = JSON.parse("[" + txt.slice(0,-1) + "]");
-		cb(arr);
+
+		var index = (upper_total * rolls.length + rollIndices[roll]) * 2;
+		var action = arr[index];
+		var value = arr[index + 1];
+
+		var phase = step % 3;
+		if(phase == 2)
+		{
+			action = "Score " + boxNames[action];
+		}
+		else
+		{
+			action = "Reroll " + action;
+		}
+
+		cb(action + " (" + value + ")");
 	});
 }
 
