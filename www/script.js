@@ -1,9 +1,11 @@
 var inputs;
 var upper_total_p;
 var total_p;
+var boxset_p;
 
 var upper_total = 0;
 var total = 0;
+var boxset = 0;
 
 function init()
 {
@@ -16,6 +18,9 @@ function init()
 
 	upper_total_p = document.getElementById("uppertotal");
 	total_p = document.getElementById("total");
+	boxset_p = document.getElementById("boxset");
+
+	onScoresChanged();
 }
 
 function onScoresChanged()
@@ -49,6 +54,24 @@ function onScoresChanged()
 	}
 
 	total_p.innerHTML = "Total: " + total;
+
+	computeBoxset();
+}
+
+function computeBoxset()
+{
+	boxset = 0;
+
+	for (var i = 0; i < inputs.length; i++)
+	{
+		var value = inputs[i].value;
+		if(value == "")
+		{
+			boxset += (1 << i);
+		}
+	}
+
+	boxset_p.innerHTML = "Boxset: " + boxset;
 }
 
 init();
