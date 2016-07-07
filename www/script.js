@@ -83,6 +83,8 @@ function onScoresChanged()
 
 	var round_p = document.getElementById("step");
 	round_p.innerHTML = "Round " + (round + 1);
+
+	clearRolls();
 }
 
 function computeBoxset()
@@ -142,7 +144,9 @@ function fetchAction(step, roll, cb)
 	{
 		var arr = JSON.parse("[" + txt.slice(0,-1) + "]");
 
-		var index = (upper_total * rolls.length + rollIndices[roll]) * 2;
+		var up = Math.min(63, upper_total);
+
+		var index = (up * rolls.length + rollIndices[roll]) * 2;
 		var action = arr[index];
 		var value = arr[index + 1];
 
@@ -187,6 +191,15 @@ function applyKeepPattern(roll, pattern)
 	}
 
 	return keep;
+}
+
+function clearRolls()
+{
+	for (var i = 0; i < rollboxes.length; i++)
+	{
+		rollboxes[i].value = "";
+		actionboxes[i].innerHTML = "";
+	};
 }
 
 init();
