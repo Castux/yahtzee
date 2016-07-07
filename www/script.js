@@ -8,7 +8,6 @@ var actionboxes;
 var upper_total = 0;
 var total = 0;
 var boxset = 0;
-var step = 0;
 var round = 0;
 
 function init()
@@ -76,8 +75,8 @@ function onScoresChanged()
 
 	computeBoxset();
 
-	var step_p = document.getElementById("step");
-	step_p.innerHTML = "Round " + (round + 1);
+	var round_p = document.getElementById("step");
+	round_p.innerHTML = "Round " + (round + 1);
 }
 
 function computeBoxset()
@@ -105,7 +104,7 @@ function onRollboxChanged(index)
 		rollboxes[index].value = "";
 		return;
 	}
-	
+
 	for (var i = 0; i < str.length; i++)
 	{
 		var num = parseInt(str[i]);
@@ -124,7 +123,38 @@ function onRollboxChanged(index)
 
 	// trigger data fetch
 
-	actionboxes[index].innerHTML = "YAAA " + str;
+	var step = round * 3 + index;
+
+	fetchAction(step, str, function(action)
+	{
+		actionboxes[index].innerHTML = action.length;
+	});
+}
+
+function fetchAction(step, roll, cb)
+{
+	var url = "data/step" + step + "/data" + boxset;
+	fetchURL(url, function(txt)
+	{
+		var arr = JSON.parse("[" + txt.slice(0,-1) + "]");
+		cb(arr);
+	});
+}
+
+function fetchURL(url, cb)
+{
+	var xmlhttp = new XMLHttpRequest();
+	
+	xmlhttp.onreadystatechange = function()
+	{
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		{
+			cb(xmlhttp.responseText);
+		}
+	};
+
+	xmlhttp.open("GET", url, true);
+	xmlhttp.send();
 }
 
 init();
