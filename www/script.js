@@ -134,9 +134,14 @@ function onRollboxChanged(index)
 
 	var step = round * 3 + index;
 
-	fetchAction(step, str, function(action)
+	fetchAction(step, str, function(action, keepall)
 	{
 		actionboxes[index].innerHTML = action;
+		if(keepall)
+		{
+			rollboxes[index + 1].value = str;
+			onRollboxChanged(index + 1);
+		}
 	});
 }
 
@@ -160,10 +165,11 @@ function fetchAction(step, roll, cb)
 		}
 		else
 		{
-			action = "Keep " + applyKeepPattern(roll, action);
+			var keep = applyKeepPattern(roll, action);
+			action = "Keep " + ((keep != "") ? keep : "nothing");
 		}
 
-		cb(action + " (" + value + ")");
+		cb(action + " (" + value + ")", keep == roll);
 	});
 }
 
