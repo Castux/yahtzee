@@ -3,8 +3,6 @@ using System.IO;
 using System.Linq;
 using System.Collections.Generic;
 using System.Threading.Tasks;
-using System.Threading;
-using System.Diagnostics;
 
 public class Solver
 {
@@ -21,10 +19,10 @@ public class Solver
 
 	public Solver()
 	{
-		Compute2();
+		PrecomputeStaticInfo();
 	}
 
-	private void Compute2()
+	private void PrecomputeStaticInfo()
 	{
 		// Keep a flat index of rolls to use for later storage
 
@@ -81,20 +79,67 @@ public class Solver
 	public const int NumPhases = 3;
 	public const int NumUpperScores = 64;
 
-	private Result[][,,] results;
-
-	private int numBoxsetsSolved = 0;
+	private Result[][][,] data;
 	private DateTime startTime;
 
-	private void MakeStorageForBoxSet(BoxSet boxset)
+	public void Solve()
 	{
-		results[boxset.bits] = new Result[NumPhases, NumUpperScores, rolls.Count];
+		var numSteps = NumPhases * 13;
+		data = new Result[numSteps][][,];
+
+		var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
+		startTime = DateTime.Now;
+
+        for (var step = numSteps - 1; step >= 0; step--)
+		{
+            var round = step / NumPhases;
+
+			Console.WriteLine(string.Format("==== Step {0}/round {1} ====", step, round + 1));
+
+			var boxsetsForRound = boxsets[13 - round];
+
+			data[step] = new Result[BoxSet.NumBoxSets][,];
+
+			Parallel.ForEach(boxsetsForRound, options, boxset => Solve(step, boxset));
+
+			// Free unused memory
+
+			if (step + 2 < numSteps)
+			{
+				data[step + 2] = null;
+			}
+		}
 	}
 
-	// Solve one state
+	private int solveCount = 0;
 
-	private void Solve(BoxSet boxset, int phase, int upperScore, string roll)
+	private void Solve(int step, BoxSet boxset)
 	{
+		data[step][boxset.bits] = new Result[NumUpperScores, rolls.Count];
+
+		for (var upperScore = 0; upperScore < NumUpperScores; upperScore++)
+			foreach (var roll in rolls)
+				Solve(boxset, step, upperScore, roll);
+
+		DumpResult(step, boxset);
+
+		lock (this)
+		{
+			solveCount++;
+
+			var totalCount = BoxSet.NumBoxSets * NumPhases;
+
+			var averageSolveTime = (DateTime.Now - startTime).TotalSeconds / solveCount;
+			var remainingTime = (totalCount - solveCount) * averageSolveTime;
+
+			Console.WriteLine(string.Format("Solved {0:F2}%, {1:F1}s left", (double)solveCount / totalCount * 100, remainingTime));
+		}
+	}
+
+	private void Solve(BoxSet boxset, int step, int upperScore, string roll)
+	{
+		var phase = step % 3;
+
 		// Phase 2: scoring
 
 		if (phase == 2)
@@ -130,7 +175,7 @@ public class Solver
 				{
 					foreach (var reroll in rerolls[roll][0]) // reroll by keeping nothing
 					{
-						futureScore += reroll.Value * results[newBoxSet.bits][0, newUpperScore, rollIndices[reroll.Key]].value;
+						futureScore += reroll.Value * data[step + 1][newBoxSet.bits][newUpperScore, rollIndices[reroll.Key]].value;
 					}
 				}
 
@@ -146,7 +191,7 @@ public class Solver
 
 			// Save result
 
-			results[boxset.bits][phase, upperScore, rollIndices[roll]] = new Result { action = (byte)boxIndices[bestBox.Value], value = maxValue };
+			data[step][boxset.bits][upperScore, rollIndices[roll]] = new Result { action = (byte)boxIndices[bestBox.Value], value = maxValue };
 		}
 
 		// Other phases: rerolling
@@ -164,7 +209,7 @@ public class Solver
 
 					foreach (var reroll in rerolls[roll][keepPattern])
 					{
-						futureScore += reroll.Value * results[boxset.bits][phase + 1, upperScore, rollIndices[reroll.Key]].value;
+						futureScore += reroll.Value * data[step + 1][boxset.bits][upperScore, rollIndices[reroll.Key]].value;
 					}
 
 					if (futureScore > maxValue)
@@ -177,84 +222,21 @@ public class Solver
 
 			// Save result
 
-			results[boxset.bits][phase, upperScore, rollIndices[roll]] = new Result { action = bestKeepPattern, value = maxValue };
+			data[step][boxset.bits][upperScore, rollIndices[roll]] = new Result { action = bestKeepPattern, value = maxValue };
 		}
 	}
 
-	private void SolveBoxSet(BoxSet boxset)
+	private void DumpResult(int step, BoxSet boxset)
 	{
-		MakeStorageForBoxSet(boxset);
+		var path = string.Format("step{0:D2}", step);
 
-		for (var phase = NumPhases - 1; phase >= 0; phase--)
-			for (var upperScore = 0; upperScore < NumUpperScores; upperScore++)
-				foreach (var roll in rolls)
-					Solve(boxset, phase, upperScore, roll);
+		Directory.CreateDirectory(path);
 
-		DumpResult(boxset);
-
-		lock (this)
+		using (var writer = new StreamWriter(File.Open(path + "/data" + boxset.bits, FileMode.Create)))
 		{
-			numBoxsetsSolved++;
-
-			var averageBoxSetTime = (DateTime.Now - startTime).TotalSeconds / numBoxsetsSolved;
-			var remainingTime = (BoxSet.NumBoxSets - numBoxsetsSolved) * averageBoxSetTime;
-
-			Console.WriteLine(string.Format("Solved {0}/{1}, {2:F1}s left", numBoxsetsSolved, BoxSet.NumBoxSets, remainingTime));
-		}
-	}
-
-	// Solve a round, assuming the next round is already solved
-	// and results are in results.
-
-	private void SolveRound(int round)
-	{
-		Console.WriteLine(string.Format("==== Round {0} ====", round));
-
-		if (results == null)
-			results = new Result[BoxSet.NumBoxSets][,,];
-
-		var boxsetsForRound = boxsets[14 - round];
-
-		ParallelOptions po = new ParallelOptions
-		{
-			MaxDegreeOfParallelism = Environment.ProcessorCount
-		};
-
-		Parallel.ForEach(boxsetsForRound, po, SolveBoxSet);
-	}
-
-	// The big baddy
-
-	public void SolveAll()
-	{
-		numBoxsetsSolved = 0;
-		startTime = DateTime.Now;
-
-		for (var round = 13; round >= 1; round--)
-		{
-			SolveRound(round);
-
-			// Free unused memory
-
-			if (round <= 11)
+			foreach (var foo in data[step][boxset.bits])
 			{
-				foreach (var boxset in boxsets[14 - (round + 2)])
-				{
-					results[boxset.bits] = null;
-				}
-			}
-		}
-	}
-
-	// Utils
-
-	public void DumpResult(BoxSet boxset)
-	{
-		using (var writer = new StreamWriter(File.Open("result" + boxset.bits, FileMode.Create)))
-		{
-			foreach (var foo in results[boxset.bits])
-			{
-				writer.Write(string.Format("{0},{1:F2};", foo.action, foo.value));
+				writer.Write(string.Format("{0},{1:F2},", foo.action, foo.value));
 			}
 		}
 	}
