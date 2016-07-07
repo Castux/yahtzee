@@ -157,7 +157,7 @@ function fetchAction(step, roll, cb)
 		}
 		else
 		{
-			action = "Reroll " + action;
+			action = "Keep " + applyKeepPattern(roll, action);
 		}
 
 		cb(action + " (" + value + ")");
@@ -178,6 +178,19 @@ function fetchURL(url, cb)
 
 	xmlhttp.open("GET", url, true);
 	xmlhttp.send();
+}
+
+function applyKeepPattern(roll, pattern)
+{
+	var keep = "";
+
+	for (var i = 0; i < 5; i++)
+	{
+		if(pattern & (1 << i))
+			keep += roll[i];
+	}
+
+	return keep;
 }
 
 init();
