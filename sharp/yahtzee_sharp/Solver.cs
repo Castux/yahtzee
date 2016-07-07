@@ -155,14 +155,12 @@ public class Solver
 
 				// Is there an upper bonus?
 
-				var newUpperScore = upperScore;
-				if (box.IsUpper())
-				{
-					newUpperScore = Math.Min(63, upperScore + score);
+				var newUpperScore = upperScore + (box.IsUpper() ? score : 0);
+				if (newUpperScore >= 63 && upperScore < 63)
+					score += 35;
 
-					if (upperScore < 63 && newUpperScore >= 63)
-						score += 35;
-				}
+				if (newUpperScore > 63)
+					newUpperScore = 63;
 
 				// Add expected future score: rerolling all dice
 

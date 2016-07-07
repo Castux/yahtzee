@@ -75,7 +75,7 @@ public static class BoxUtils
 {
 	public static bool IsUpper(this Box box)
 	{
-		return box >= Box.ThreeOfKind;
+		return box <= Box.Sixes;
 	}
 
 	private static int ScoreUpper(byte[] faces, int face)
