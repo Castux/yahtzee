@@ -67,6 +67,9 @@ function onScoresChanged()
 		}
 	};
 
+	var bottombox = document.getElementById("bottom");
+	bottombox.style.display = (round < 13) ? "block" : "none";
+
 	// Display
 
 	upper_total_p.innerHTML = "Upper total: " + upper_total;
