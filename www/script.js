@@ -1,7 +1,6 @@
 var inputs;
 var upper_total_p;
 var total_p;
-var boxset_p;
 var rollboxes;
 var actionboxes;
 
@@ -23,7 +22,6 @@ function init()
 
 	upper_total_p = document.getElementById("uppertotal");
 	total_p = document.getElementById("total");
-	boxset_p = document.getElementById("boxset");
 
 	rollboxes = document.getElementsByClassName("rollbox");
 	for (var i = 0; i < rollboxes.length; i++)
@@ -99,8 +97,6 @@ function computeBoxset()
 			boxset += (1 << i);
 		}
 	}
-
-	boxset_p.innerHTML = "Boxset: " + boxset;
 }
 
 function onRollboxChanged(index)
