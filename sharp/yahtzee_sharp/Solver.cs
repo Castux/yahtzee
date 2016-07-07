@@ -228,7 +228,7 @@ public class Solver
 
 	private void DumpResult(int step, BoxSet boxset)
 	{
-		var path = string.Format("step{0:D2}", step);
+		var path = string.Format("step{0:D}", step);
 
 		Directory.CreateDirectory(path);
 
