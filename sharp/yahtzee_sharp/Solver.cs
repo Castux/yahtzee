@@ -10,6 +10,7 @@ public class Solver
 
 	private Ruleset ruleset;
 	private int NumUpperScores;
+	private int NumSteps;
 
 	// Precomputed static info
 
@@ -21,10 +22,24 @@ public class Solver
 
 	private List<List<BoxSet>> boxsetsByCount;
 
+	// States
+
+	private struct Result
+	{
+		public float value;
+		public byte action;
+	}
+
+	private Result[][][,] data;
+	private DateTime startTime;
+
 	public Solver(Ruleset ruleset)
 	{
 		this.ruleset = ruleset;
 		NumUpperScores = ruleset.UpperBonusThreshold + 1;
+		NumSteps = ruleset.NumPhases * ruleset.Boxes.NumBoxes;
+
+		data = new Result[NumSteps][][,];
 
 		PrecomputeStaticInfo();
 	}
@@ -69,26 +84,20 @@ public class Solver
 		}
 	}
 
-	// States
-
-	public struct Result
-	{
-		public float value;
-		public byte action;
-	}
-
-	private Result[][][,] data;
-	private DateTime startTime;
-
 	public void Solve()
 	{
-		var numSteps = ruleset.NumPhases * ruleset.Boxes.NumBoxes;
-		data = new Result[numSteps][][,];
+		Solve(NumSteps - 1);
+	}
 
+	public void Solve(int startStep)
+	{
 		var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
 		startTime = DateTime.Now;
 
-        for (var step = numSteps - 1; step >= 0; step--)
+		if (startStep < NumSteps - 1)
+			LoadStep(startStep + 1);
+
+		for (var step = NumSteps - 1; step >= 0; step--)
 		{
             var round = step / ruleset.NumPhases;
 
@@ -102,7 +111,7 @@ public class Solver
 
 			// Free unused memory
 
-			if (step + 2 < numSteps)
+			if (step + 2 < NumSteps)
 			{
 				data[step + 2] = null;
 			}
@@ -234,6 +243,53 @@ public class Solver
 			{
 				writer.Write(string.Format("{0},{1:F2},", foo.action, foo.value));
 			}
+		}
+	}
+
+	private void LoadResult(int step, BoxSet boxset)
+	{
+		var path = string.Format("step{0:D}/data{1}", step, boxset.bits);
+
+		using (var reader = new StreamReader(File.Open(path, FileMode.Open)))
+		{
+			var str = reader.ReadToEnd();
+			var arr = str.Split(',');
+
+			var index = 0;
+
+			var tmp = new Result[NumUpperScores, rolls.Count];
+
+			for (var upperScore = 0; upperScore < NumUpperScores; upperScore++)
+			{
+				for (var rollIndex = 0; rollIndex < rolls.Count; rollIndex++)
+				{
+					tmp[upperScore, rollIndex] = new Result()
+					{
+						action = byte.Parse(arr[index]),
+						value = float.Parse(arr[index + 1])
+					};
+
+					index += 2;
+				}
+			}
+
+			data[step][boxset.bits] = tmp;
+		}
+	}
+
+	private void LoadStep(int step)
+	{
+		var round = step / ruleset.NumPhases;
+
+		Console.WriteLine(string.Format("==== Loading step {0}/round {1} ====", step, round + 1));
+
+		var boxsetsForRound = boxsetsByCount[ruleset.Boxes.NumBoxes - round];
+
+		data[step] = new Result[ruleset.Boxes.NumBoxSets][,];
+
+		foreach (var boxset in boxsetsForRound)
+		{
+			LoadResult(step, boxset);
 		}
 	}
 }
