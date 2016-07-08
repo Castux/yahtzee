@@ -176,7 +176,7 @@ function getFormatedAction(step, roll, cb)
 			action = "Keep " + ((keep != "") ? keep : "nothing");
 		}
 
-		cb(action + " (" + value + ")", keep == roll);
+		cb(action + " (" + value.toFixed(2) + ")", keep == roll);
 	});
 }
 
