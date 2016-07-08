@@ -12,10 +12,13 @@ var round = 0;
 var rollIndices;
 
 var data_path;
+var box_names;
 
-function init(path)
+function init(path, names)
 {
 	data_path = path;
+	box_names = names;
+
 	inputs = document.getElementsByClassName("scorebox");
 
 	for (var i = 0; i < inputs.length; i++)
@@ -71,7 +74,7 @@ function onScoresChanged()
 	};
 
 	var bottombox = document.getElementById("bottom");
-	bottombox.style.display = (round < 13) ? "block" : "none";
+	bottombox.style.display = (round < inputs.length) ? "block" : "none";
 
 	// Display
 
@@ -166,7 +169,7 @@ function fetchAction(step, roll, cb)
 		var phase = step % 3;
 		if(phase == 2)
 		{
-			action = "Score " + yahtzeeBoxNames[action];
+			action = "Score " + box_names[action];
 		}
 		else
 		{
