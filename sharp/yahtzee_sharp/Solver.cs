@@ -97,7 +97,7 @@ public class Solver
 		if (startStep < NumSteps - 1)
 			LoadStep(startStep + 1);
 
-		for (var step = NumSteps - 1; step >= 0; step--)
+		for (var step = startStep; step >= 0; step--)
 		{
             var round = step / ruleset.NumPhases;
 
