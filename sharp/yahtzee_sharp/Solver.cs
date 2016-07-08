@@ -6,19 +6,26 @@ using System.Threading.Tasks;
 
 public class Solver
 {
+	// Rule set
+
+	private Ruleset ruleset;
+	private int NumUpperScores;
+
 	// Precomputed static info
 
-	public List<string> rolls;
-	public Dictionary<string, int> rollIndices;
+	private List<string> rolls;
+	private Dictionary<string, int> rollIndices;
 
 	private Dictionary<string, Dictionary<string, float>[]> rerolls;
-	public Dictionary<string, Dictionary<Box, int>> scores;
+	private Dictionary<string, Dictionary<Box2, int>> scores;
 
-	public List<List<BoxSet>> boxsets;
-	public Dictionary<Box, int> boxIndices;
+	private List<List<BoxSet2>> boxsetsByCount;
 
-	public Solver()
+	public Solver(Ruleset ruleset)
 	{
+		this.ruleset = ruleset;
+		NumUpperScores = ruleset.UpperBonusThreshold + 1;
+
 		PrecomputeStaticInfo();
 	}
 
@@ -36,7 +43,7 @@ public class Solver
 		// Then: rerolls and scores
 
 		rerolls = new Dictionary<string, Dictionary<string, float>[]>();
-		scores = new Dictionary<string, Dictionary<Box, int>>();
+		scores = new Dictionary<string, Dictionary<Box2, int>>();
 
 		foreach (var roll in rolls)
 		{
@@ -46,26 +53,20 @@ public class Solver
 
 			// and scores
 
-			scores[roll] = BoxUtils.Scores(roll);
+			scores[roll] = ruleset.Scores(roll);
 		}
 
 		// Boxsets by number of boxes
 
-		boxsets = new List<List<BoxSet>>();
+		boxsetsByCount = new List<List<BoxSet2>>();
 
-		for (var i = 0; i <= BoxSet.NumBoxes; i++)
-			boxsets.Add(new List<BoxSet>());
+		for (var i = 0; i <= ruleset.Boxes.NumBoxes; i++)
+			boxsetsByCount.Add(new List<BoxSet2>());
 
-		foreach (var boxset in BoxSet.AllSets)
+		foreach (var boxset in ruleset.Boxes.AllBoxSets)
 		{
-			boxsets[boxset.Contents.Count()].Add(boxset);
+			boxsetsByCount[boxset.Contents.Count()].Add(boxset);
 		}
-
-		// Box indices
-
-		boxIndices = new Dictionary<Box, int>();
-		for (var i = 0; i <= BoxSet.NumBoxes; i++)
-			boxIndices[(Box)(1 << i)] = i;
 	}
 
 	// States
@@ -76,15 +77,12 @@ public class Solver
 		public byte action;
 	}
 
-	public const int NumPhases = 3;
-	public const int NumUpperScores = 64;
-
 	private Result[][][,] data;
 	private DateTime startTime;
 
 	public void Solve()
 	{
-		var numSteps = NumPhases * 13;
+		var numSteps = ruleset.NumPhases * ruleset.Boxes.NumBoxes;
 		data = new Result[numSteps][][,];
 
 		var options = new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount };
@@ -92,11 +90,11 @@ public class Solver
 
         for (var step = numSteps - 1; step >= 0; step--)
 		{
-            var round = step / NumPhases;
+            var round = step / ruleset.NumPhases;
 
 			Console.WriteLine(string.Format("==== Step {0}/round {1} ====", step, round + 1));
 
-			var boxsetsForRound = boxsets[13 - round];
+			var boxsetsForRound = boxsetsByCount[ruleset.Boxes.NumBoxes - round];
 
 			data[step] = new Result[BoxSet.NumBoxSets][,];
 
@@ -113,7 +111,7 @@ public class Solver
 
 	private int solveCount = 0;
 
-	private void Solve(int step, BoxSet boxset)
+	private void Solve(int step, BoxSet2 boxset)
 	{
 		data[step][boxset.bits] = new Result[NumUpperScores, rolls.Count];
 
@@ -127,7 +125,7 @@ public class Solver
 		{
 			solveCount++;
 
-			var totalCount = BoxSet.NumBoxSets * NumPhases;
+			var totalCount = BoxSet.NumBoxSets * ruleset.NumPhases;
 
 			var averageSolveTime = (DateTime.Now - startTime).TotalSeconds / solveCount;
 			var remainingTime = (totalCount - solveCount) * averageSolveTime;
@@ -136,18 +134,18 @@ public class Solver
 		}
 	}
 
-	private void Solve(BoxSet boxset, int step, int upperScore, string roll)
+	private void Solve(BoxSet2 boxset, int step, int upperScore, string roll)
 	{
-		var phase = step % 3;
+		var phase = step % ruleset.NumPhases;
 
 		// Phase 2: scoring
 
-		if (phase == 2)
+		if (phase == ruleset.NumPhases - 1)
 		{
 			float maxValue = -1;
-			Box? bestBox = null;
+			Box2? bestBox = null;
 
-			foreach (Box box in boxset.Contents)
+			foreach (Box2 box in boxset.Contents)
 			{
 				// What's the score for this box?
 
@@ -155,12 +153,12 @@ public class Solver
 
 				// Is there an upper bonus?
 
-				var newUpperScore = upperScore + (box.IsUpper() ? score : 0);
-				if (newUpperScore >= 63 && upperScore < 63)
-					score += 35;
+				var newUpperScore = upperScore + (ruleset.IsUpper(box) ? score : 0);
+				if (newUpperScore >= ruleset.UpperBonusThreshold && upperScore < ruleset.UpperBonusThreshold)
+					score += ruleset.UpperBonus;
 
-				if (newUpperScore > 63)
-					newUpperScore = 63;
+				if (newUpperScore > ruleset.UpperBonusThreshold)
+					newUpperScore = ruleset.UpperBonusThreshold;
 
 				// Add expected future score: rerolling all dice
 
@@ -171,7 +169,7 @@ public class Solver
 
 				if (!newBoxSet.IsEmpty)
 				{
-					foreach (var reroll in rerolls[roll][0]) // reroll by keeping nothing
+					foreach (var reroll in rerolls[roll][0]) // reroll by keeping nothing (keep pattern = 0)
 					{
 						futureScore += reroll.Value * data[step + 1][newBoxSet.bits][newUpperScore, rollIndices[reroll.Key]].value;
 					}
@@ -189,7 +187,7 @@ public class Solver
 
 			// Save result
 
-			data[step][boxset.bits][upperScore, rollIndices[roll]] = new Result { action = (byte)boxIndices[bestBox.Value], value = maxValue };
+			data[step][boxset.bits][upperScore, rollIndices[roll]] = new Result { action = (byte)bestBox.Value.Index, value = maxValue };
 		}
 
 		// Other phases: rerolling
@@ -224,7 +222,7 @@ public class Solver
 		}
 	}
 
-	private void DumpResult(int step, BoxSet boxset)
+	private void DumpResult(int step, BoxSet2 boxset)
 	{
 		var path = string.Format("step{0:D}", step);
 

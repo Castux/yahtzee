@@ -1,8 +1,12 @@
-﻿class MainClass
+﻿using System;
+using System.Collections.Generic;
+
+class MainClass
 {
 	public static void Main(string[] args)
 	{
-		var solver = new Solver();
+		var ruleset = new Yahtzee();
+		var solver = new Solver(ruleset);
 		solver.Solve();
 	}
 }
