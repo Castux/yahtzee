@@ -142,9 +142,9 @@ function onRollboxChanged(index)
 
 	var step = round * 3 + index;
 
-	fetchAction(step, str, function(action, keepall)
+	getFormatedAction(step, str, function(actiontxt, keepall)
 	{
-		actionboxes[index].innerHTML = action;
+		actionboxes[index].innerHTML = actiontxt;
 		if(keepall)
 		{
 			rollboxes[index + 1].value = str;
@@ -153,19 +153,12 @@ function onRollboxChanged(index)
 	});
 }
 
-function fetchAction(step, roll, cb)
+function getFormatedAction(step, roll, cb)
 {
-	var url = "../" + data_path + "/step" + step + "/data" + boxset;
-	fetchURL(url, function(txt)
+	var func = (box_names == yahtzeeBoxNames) ? fetchData : fetchDataBinary;
+
+	func(step, roll, function(action, value)
 	{
-		var arr = JSON.parse("[" + txt.slice(0,-1) + "]");
-
-		var up = Math.min(63, upper_total);
-
-		var index = (up * rolls.length + rollIndices[roll]) * 2;
-		var action = arr[index];
-		var value = arr[index + 1];
-
 		var phase = step % 3;
 		if(phase == 2)
 		{
@@ -178,6 +171,23 @@ function fetchAction(step, roll, cb)
 		}
 
 		cb(action + " (" + value + ")", keep == roll);
+	});
+}
+
+function fetchData(step, roll, cb)
+{
+	var url = "../" + data_path + "/step" + step + "/data" + boxset;
+	fetchURL(url, function(txt)
+	{
+		var arr = JSON.parse("[" + txt.slice(0,-1) + "]");
+
+		var up = Math.min(63, upper_total);
+
+		var index = (up * rolls.length + rollIndices[roll]) * 2;
+		var action = arr[index];
+		var value = arr[index + 1];
+
+		cb(action, value);
 	});
 }
 
@@ -194,6 +204,41 @@ function fetchURL(url, cb)
 	};
 
 	xmlhttp.open("GET", url, true);
+	xmlhttp.send();
+}
+
+function fetchDataBinary(step, roll, cb)
+{
+	var url = "../" + data_path + "/step" + step + "/data" + boxset;
+	fetchURLBinary(url, function(arraybuffer)
+	{
+		var up = Math.min(63, upper_total);
+
+		var offset = (up * rolls.length + rollIndices[roll]) * 5;	// 1 byte for action, 4 bytes for value
+
+		var actionarray = new Int8Array(arraybuffer, offset, 1);
+
+		var tmp = arraybuffer.slice(offset + 1, offset + 5);
+		var floatarray = new Float32Array(tmp);
+
+		cb(actionarray[0], floatarray[0]);
+	});
+}
+
+function fetchURLBinary(url, cb)
+{
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.open("GET", url, true);
+	xmlhttp.responseType = "arraybuffer";
+
+	xmlhttp.onload = function()
+	{
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		{
+			cb(xmlhttp.response);
+		}
+	};
+
 	xmlhttp.send();
 }
 
