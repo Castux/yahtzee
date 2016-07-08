@@ -111,6 +111,7 @@ function onRollboxChanged(index)
 	if(str.length != 5)
 	{
 		rollboxes[index].value = "";
+		actionboxes[index].innerHTML = "";
 		return;
 	}
 
@@ -120,6 +121,7 @@ function onRollboxChanged(index)
 		if(num < 0 || num > 6)
 		{
 			rollboxes[index].value = "";
+			actionboxes[index].innerHTML = "";
 			return;
 		}
 
