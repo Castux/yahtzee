@@ -50,6 +50,11 @@ function init(path, names)
 	};
 }
 
+function isYatzy()
+{
+	return box_names == yatzyBoxNames;
+}
+
 function onScoresChanged()
 {
 	upper_total = 0;
@@ -82,8 +87,9 @@ function onScoresChanged()
 
 	if(upper_total >= 63)
 	{
-		total += 35;
-		upper_total_p.innerHTML += " (+35)";
+		var bonus = isYatzy() ? 50 : 35;
+		total += bonus;
+		upper_total_p.innerHTML += " (+" + bonus + ")";
 	}
 
 	total_p.innerHTML = "Total: " + total;
@@ -155,7 +161,7 @@ function onRollboxChanged(index)
 
 function getFormatedAction(step, roll, cb)
 {
-	var func = (box_names == yahtzeeBoxNames) ? fetchData : fetchDataBinary;
+	var func = isYatzy() ? fetchDataBinary : fetchData;
 
 	func(step, roll, function(action, value)
 	{
