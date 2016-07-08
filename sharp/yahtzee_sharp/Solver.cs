@@ -139,7 +139,7 @@ public class Solver
 			var averageSolveTime = (DateTime.Now - startTime).TotalSeconds / solveCount;
 			var remainingTime = (totalCount - solveCount) * averageSolveTime;
 
-			Console.WriteLine(string.Format("Solved {0:F2}%, {1:F1}s left", (double)solveCount / totalCount * 100, remainingTime));
+			Console.WriteLine(string.Format("Solved {0:F2}%, {1} left", (double)solveCount / totalCount * 100, new TimeSpan(0,0, (int)remainingTime)));
 		}
 	}
 
@@ -237,11 +237,12 @@ public class Solver
 
 		Directory.CreateDirectory(path);
 
-		using (var writer = new StreamWriter(File.Open(path + "/data" + boxset.bits, FileMode.Create)))
+		using (var writer = new BinaryWriter(File.Open(path + "/data" + boxset.bits, FileMode.Create)))
 		{
-			foreach (var foo in data[step][boxset.bits])
+			foreach (var result in data[step][boxset.bits])
 			{
-				writer.Write(string.Format("{0},{1:F2},", foo.action, foo.value));
+				writer.Write(result.action);
+				writer.Write(result.value);
 			}
 		}
 	}
@@ -250,26 +251,19 @@ public class Solver
 	{
 		var path = string.Format("step{0:D}/data{1}", step, boxset.bits);
 
-		using (var reader = new StreamReader(File.Open(path, FileMode.Open)))
+		using (var reader = new BinaryReader(File.Open(path, FileMode.Open)))
 		{
-			var str = reader.ReadToEnd();
-			var arr = str.Split(',');
-
-			var index = 0;
-
 			var tmp = new Result[NumUpperScores, rolls.Count];
 
 			for (var upperScore = 0; upperScore < NumUpperScores; upperScore++)
 			{
 				for (var rollIndex = 0; rollIndex < rolls.Count; rollIndex++)
 				{
-					tmp[upperScore, rollIndex] = new Result()
+					tmp[upperScore, rollIndex] = new Result
 					{
-						action = byte.Parse(arr[index]),
-						value = float.Parse(arr[index + 1])
+						action = reader.ReadByte(),
+						value = reader.ReadSingle()
 					};
-
-					index += 2;
 				}
 			}
 
