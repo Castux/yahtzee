@@ -28,7 +28,7 @@ public class Yahtzee : Ruleset
 		NumPhases = 3;
     }
 
-	public override int Score(string roll, Box2 box)
+	public override int Score(string roll, Box box)
 	{
 		var faces = Dice.Faces(roll);
 		var sum = faces.Select(x => (int)x).Sum();

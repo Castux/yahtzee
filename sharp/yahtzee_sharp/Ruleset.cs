@@ -10,9 +10,9 @@ public abstract class Ruleset
 
 	public int NumPhases;
 
-	public abstract int Score(string roll, Box2 box);
+	public abstract int Score(string roll, Box box);
 
-	public bool IsUpper(Box2 box)
+	public bool IsUpper(Box box)
 	{
 		return box.bits <= Boxes.GetBox("sixes").bits;
 	}
@@ -35,11 +35,11 @@ public abstract class Ruleset
 		return false;
 	}
 
-	public Dictionary<Box2, int> Scores(string roll)
+	public Dictionary<Box, int> Scores(string roll)
 	{
-		var scores = new Dictionary<Box2, int>();
+		var scores = new Dictionary<Box, int>();
 
-		foreach (Box2 box in Boxes.AllBoxes)
+		foreach (Box box in Boxes.AllBoxes)
 			scores[box] = Score(roll, box);
 
 		return scores;

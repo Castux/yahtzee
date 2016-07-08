@@ -5,25 +5,25 @@ public class Boxes
 {
 	public List<string> Names { private set; get; }
 
-	private Dictionary<string, Box2> boxes;
+	private Dictionary<string, Box> boxes;
 
 	public Boxes(List<string> boxNames)
 	{
 		Names = boxNames;
-		boxes = new Dictionary<string, Box2>();
+		boxes = new Dictionary<string, Box>();
 
 		for (var i = 0; i < Names.Count; i++)
 		{
-			boxes[Names[i]] = new Box2(1 << i);
+			boxes[Names[i]] = new Box(1 << i);
 		}
 	}
 
-	public Box2 GetBox(string name)
+	public Box GetBox(string name)
 	{
 		return boxes[name];
 	}
 
-	public string GetName(Box2 box)
+	public string GetName(Box box)
 	{
 		foreach (var pair in boxes)
 			if (pair.Value.bits == box.bits)
@@ -32,7 +32,7 @@ public class Boxes
 		throw new Exception("Wat");
 	}
 
-	public IEnumerable<Box2> AllBoxes
+	public IEnumerable<Box> AllBoxes
 	{
 		get { return boxes.Values; }
 	}
@@ -47,27 +47,27 @@ public class Boxes
 		get { return 1 << NumBoxes; }
 	}
 
-	public BoxSet2 EmptyBoxSet
+	public BoxSet EmptyBoxSet
 	{
-		get { return new BoxSet2(0, this); }
+		get { return new BoxSet(0, this); }
 	}
 
-	public IEnumerable<BoxSet2> AllBoxSets
+	public IEnumerable<BoxSet> AllBoxSets
 	{
 		get
 		{
 			for (int i = 0; i < NumBoxSets; i++)
-				yield return new BoxSet2(i, this);
+				yield return new BoxSet(i, this);
 		}
 	}
 
 }
 
-public struct Box2
+public struct Box
 {
 	public int bits;
 
-	public Box2(int bits)
+	public Box(int bits)
 	{
 		this.bits = bits;
 	}
@@ -78,39 +78,39 @@ public struct Box2
 	}
 }
 
-public struct BoxSet2
+public struct BoxSet
 {
 	public Boxes boxes;
 	public int bits;
 
-	public BoxSet2(int bits, Boxes boxes)
+	public BoxSet(int bits, Boxes boxes)
 	{
 		this.boxes = boxes;
 		this.bits = bits;
 	}
 
-	public void Add(Box2 box)
+	public void Add(Box box)
 	{
 		bits |= box.bits;
 	}
 
-	public void Remove(Box2 box)
+	public void Remove(Box box)
 	{
 		bits &= ~box.bits;
 	}
 
-	public bool Contains(Box2 box)
+	public bool Contains(Box box)
 	{
 		return (bits & box.bits) != 0;
 	}
 
-	public IEnumerable<Box2> Contents
+	public IEnumerable<Box> Contents
 	{
 		get
 		{
 			for (int i = 0; i < boxes.NumBoxes; i++)
 			{
-				var box = new Box2(1 << i);
+				var box = new Box(1 << i);
 				if (Contains(box))
 					yield return box;
 			}

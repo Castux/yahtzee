@@ -17,9 +17,9 @@ public class Solver
 	private Dictionary<string, int> rollIndices;
 
 	private Dictionary<string, Dictionary<string, float>[]> rerolls;
-	private Dictionary<string, Dictionary<Box2, int>> scores;
+	private Dictionary<string, Dictionary<Box, int>> scores;
 
-	private List<List<BoxSet2>> boxsetsByCount;
+	private List<List<BoxSet>> boxsetsByCount;
 
 	public Solver(Ruleset ruleset)
 	{
@@ -43,7 +43,7 @@ public class Solver
 		// Then: rerolls and scores
 
 		rerolls = new Dictionary<string, Dictionary<string, float>[]>();
-		scores = new Dictionary<string, Dictionary<Box2, int>>();
+		scores = new Dictionary<string, Dictionary<Box, int>>();
 
 		foreach (var roll in rolls)
 		{
@@ -58,10 +58,10 @@ public class Solver
 
 		// Boxsets by number of boxes
 
-		boxsetsByCount = new List<List<BoxSet2>>();
+		boxsetsByCount = new List<List<BoxSet>>();
 
 		for (var i = 0; i <= ruleset.Boxes.NumBoxes; i++)
-			boxsetsByCount.Add(new List<BoxSet2>());
+			boxsetsByCount.Add(new List<BoxSet>());
 
 		foreach (var boxset in ruleset.Boxes.AllBoxSets)
 		{
@@ -96,7 +96,7 @@ public class Solver
 
 			var boxsetsForRound = boxsetsByCount[ruleset.Boxes.NumBoxes - round];
 
-			data[step] = new Result[BoxSet.NumBoxSets][,];
+			data[step] = new Result[ruleset.Boxes.NumBoxSets][,];
 
 			Parallel.ForEach(boxsetsForRound, options, boxset => Solve(step, boxset));
 
@@ -111,7 +111,7 @@ public class Solver
 
 	private int solveCount = 0;
 
-	private void Solve(int step, BoxSet2 boxset)
+	private void Solve(int step, BoxSet boxset)
 	{
 		data[step][boxset.bits] = new Result[NumUpperScores, rolls.Count];
 
@@ -125,7 +125,7 @@ public class Solver
 		{
 			solveCount++;
 
-			var totalCount = BoxSet.NumBoxSets * ruleset.NumPhases;
+			var totalCount = ruleset.Boxes.NumBoxSets * ruleset.NumPhases;
 
 			var averageSolveTime = (DateTime.Now - startTime).TotalSeconds / solveCount;
 			var remainingTime = (totalCount - solveCount) * averageSolveTime;
@@ -134,7 +134,7 @@ public class Solver
 		}
 	}
 
-	private void Solve(BoxSet2 boxset, int step, int upperScore, string roll)
+	private void Solve(BoxSet boxset, int step, int upperScore, string roll)
 	{
 		var phase = step % ruleset.NumPhases;
 
@@ -143,9 +143,9 @@ public class Solver
 		if (phase == ruleset.NumPhases - 1)
 		{
 			float maxValue = -1;
-			Box2? bestBox = null;
+			Box? bestBox = null;
 
-			foreach (Box2 box in boxset.Contents)
+			foreach (Box box in boxset.Contents)
 			{
 				// What's the score for this box?
 
@@ -222,7 +222,7 @@ public class Solver
 		}
 	}
 
-	private void DumpResult(int step, BoxSet2 boxset)
+	private void DumpResult(int step, BoxSet boxset)
 	{
 		var path = string.Format("step{0:D}", step);
 
