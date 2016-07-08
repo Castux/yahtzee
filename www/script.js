@@ -11,8 +11,11 @@ var round = 0;
 
 var rollIndices;
 
-function init()
+var data_path;
+
+function init(path)
 {
+	data_path = path;
 	inputs = document.getElementsByClassName("scorebox");
 
 	for (var i = 0; i < inputs.length; i++)
@@ -149,7 +152,7 @@ function onRollboxChanged(index)
 
 function fetchAction(step, roll, cb)
 {
-	var url = "data/step" + step + "/data" + boxset;
+	var url = "../" + data_path + "/step" + step + "/data" + boxset;
 	fetchURL(url, function(txt)
 	{
 		var arr = JSON.parse("[" + txt.slice(0,-1) + "]");
@@ -163,7 +166,7 @@ function fetchAction(step, roll, cb)
 		var phase = step % 3;
 		if(phase == 2)
 		{
-			action = "Score " + boxNames[action];
+			action = "Score " + yahtzeeBoxNames[action];
 		}
 		else
 		{
@@ -212,5 +215,3 @@ function clearRolls()
 		actionboxes[i].innerHTML = "";
 	};
 }
-
-init();
