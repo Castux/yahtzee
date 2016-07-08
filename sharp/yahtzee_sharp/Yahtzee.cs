@@ -91,5 +91,18 @@ public class Yahtzee : Ruleset
 
 		return longest;
 	}
+
+	private static bool NOfKind(byte[] faces, int n, bool exact = false)
+	{
+		for (int i = 1; i <= 6; i++)
+		{
+			var count = faces.Count(f => f == i);
+
+			if ((exact && count == n) || (!exact && count >= n))
+				return true;
+		}
+
+		return false;
+	}
 }
 

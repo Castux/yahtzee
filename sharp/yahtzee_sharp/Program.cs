@@ -18,6 +18,9 @@ class MainClass
 			case "yahtzee":
 				ruleset = new Yahtzee();
 				break;
+			case "yatzy":
+				ruleset = new Yatzy();
+				break;
 			default:
 				Console.WriteLine("Unknown ruleset " + rulesetArg);
 				return;

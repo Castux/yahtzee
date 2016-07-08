@@ -22,19 +22,6 @@ public abstract class Ruleset
 		return faces.Count(f => f == face) * face;
 	}
 
-	protected static bool NOfKind(byte[] faces, int n, bool exact = false)
-	{
-		for (int i = 1; i <= 6; i++)
-		{
-			var count = faces.Count(f => f == i);
-
-			if ((exact && count == n) || (!exact && count >= n))
-				return true;
-		}
-
-		return false;
-	}
-
 	public Dictionary<Box, int> Scores(string roll)
 	{
 		var scores = new Dictionary<Box, int>();

@@ -20,7 +20,7 @@
     <ExternalConsole>true</ExternalConsole>
     <PlatformTarget>x86</PlatformTarget>
     <ConsolePause>true</ConsolePause>
-    <Commandlineparameters>yahtzee</Commandlineparameters>
+    <Commandlineparameters>yatzy</Commandlineparameters>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|x86' ">
     <Optimize>true</Optimize>
@@ -41,6 +41,7 @@
     <Compile Include="Ruleset.cs" />
     <Compile Include="Yahtzee.cs" />
     <Compile Include="Solver.cs" />
+    <Compile Include="Yatzy.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildBinPath)\Microsoft.CSharp.targets" />
 </Project>
