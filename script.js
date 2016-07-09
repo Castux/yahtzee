@@ -11,8 +11,14 @@ var round = 0;
 
 var rollIndices;
 
-function init()
+var data_path;
+var box_names;
+
+function init(path, names)
 {
+	data_path = path;
+	box_names = names;
+
 	inputs = document.getElementsByClassName("scorebox");
 
 	for (var i = 0; i < inputs.length; i++)
@@ -44,6 +50,11 @@ function init()
 	};
 }
 
+function isYatzy()
+{
+	return box_names == yatzyBoxNames;
+}
+
 function onScoresChanged()
 {
 	upper_total = 0;
@@ -68,7 +79,7 @@ function onScoresChanged()
 	};
 
 	var bottombox = document.getElementById("bottom");
-	bottombox.style.display = (round < 13) ? "block" : "none";
+	bottombox.style.display = (round < inputs.length) ? "block" : "none";
 
 	// Display
 
@@ -76,8 +87,9 @@ function onScoresChanged()
 
 	if(upper_total >= 63)
 	{
-		total += 35;
-		upper_total_p.innerHTML += " (+35)";
+		var bonus = isYatzy() ? 50 : 35;
+		total += bonus;
+		upper_total_p.innerHTML += " (+" + bonus + ")";
 	}
 
 	total_p.innerHTML = "Total: " + total;
@@ -111,6 +123,7 @@ function onRollboxChanged(index)
 	if(str.length != 5)
 	{
 		rollboxes[index].value = "";
+		actionboxes[index].innerHTML = "";
 		return;
 	}
 
@@ -120,6 +133,7 @@ function onRollboxChanged(index)
 		if(num < 0 || num > 6)
 		{
 			rollboxes[index].value = "";
+			actionboxes[index].innerHTML = "";
 			return;
 		}
 
@@ -134,9 +148,9 @@ function onRollboxChanged(index)
 
 	var step = round * 3 + index;
 
-	fetchAction(step, str, function(action, keepall)
+	getFormatedAction(step, str, function(actiontxt, keepall)
 	{
-		actionboxes[index].innerHTML = action;
+		actionboxes[index].innerHTML = actiontxt;
 		if(keepall)
 		{
 			rollboxes[index + 1].value = str;
@@ -145,9 +159,30 @@ function onRollboxChanged(index)
 	});
 }
 
-function fetchAction(step, roll, cb)
+function getFormatedAction(step, roll, cb)
 {
-	var url = "data/step" + step + "/data" + boxset;
+	var func = isYatzy() ? fetchDataBinary : fetchData;
+
+	func(step, roll, function(action, value)
+	{
+		var phase = step % 3;
+		if(phase == 2)
+		{
+			action = "Score " + box_names[action];
+		}
+		else
+		{
+			var keep = applyKeepPattern(roll, action);
+			action = "Keep " + ((keep != "") ? keep : "nothing");
+		}
+
+		cb(action + " (" + value.toFixed(2) + ")", keep == roll);
+	});
+}
+
+function fetchData(step, roll, cb)
+{
+	var url = "../" + data_path + "/step" + step + "/data" + boxset;
 	fetchURL(url, function(txt)
 	{
 		var arr = JSON.parse("[" + txt.slice(0,-1) + "]");
@@ -158,18 +193,7 @@ function fetchAction(step, roll, cb)
 		var action = arr[index];
 		var value = arr[index + 1];
 
-		var phase = step % 3;
-		if(phase == 2)
-		{
-			action = "Score " + boxNames[action];
-		}
-		else
-		{
-			var keep = applyKeepPattern(roll, action);
-			action = "Keep " + ((keep != "") ? keep : "nothing");
-		}
-
-		cb(action + " (" + value + ")", keep == roll);
+		cb(action, value);
 	});
 }
 
@@ -186,6 +210,41 @@ function fetchURL(url, cb)
 	};
 
 	xmlhttp.open("GET", url, true);
+	xmlhttp.send();
+}
+
+function fetchDataBinary(step, roll, cb)
+{
+	var url = data_path + "/step" + step + "/data" + boxset;
+	fetchURLBinary(url, function(arraybuffer)
+	{
+		var up = Math.min(63, upper_total);
+
+		var offset = (up * rolls.length + rollIndices[roll]) * 5;	// 1 byte for action, 4 bytes for value
+
+		var actionarray = new Int8Array(arraybuffer, offset, 1);
+
+		var tmp = arraybuffer.slice(offset + 1, offset + 5);
+		var floatarray = new Float32Array(tmp);
+
+		cb(actionarray[0], floatarray[0]);
+	});
+}
+
+function fetchURLBinary(url, cb)
+{
+	var xmlhttp = new XMLHttpRequest();
+	xmlhttp.open("GET", url, true);
+	xmlhttp.responseType = "arraybuffer";
+
+	xmlhttp.onload = function()
+	{
+		if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
+		{
+			cb(xmlhttp.response);
+		}
+	};
+
 	xmlhttp.send();
 }
 
@@ -210,5 +269,3 @@ function clearRolls()
 		actionboxes[i].innerHTML = "";
 	};
 }
-
-init();

@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+	<head>
+		<meta charset="utf-8">
+		<title>Optimal Yatzy</title>
+	</head>
+	<body>
+		<table>
+			<tr>
+				<td>Ones</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Twos</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Threes</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Fours</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Fives</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Sixes</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Pair</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Two pairs</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Three of a kind</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Four of a kind</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Small straight</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Large straight</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Full house</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Chance</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+			<tr>
+				<td>Yatzy (50)</th>
+				<td><input class="scorebox" type="number" value=""></th>
+			</tr>
+		</table>
+
+		<p id="uppertotal">Upper total</p>
+		<p id="total">Total</p>
+
+		<div id="bottom">
+			<p id="step">Round</p>
+
+			<table>
+				<tr>
+					<td>Roll 1</td>
+					<td><input class="rollbox" type="number" value=""></td>
+					<td class="actionbox"></td>
+				</tr>
+				<tr>
+					<td>Roll 2</td>
+					<td><input class="rollbox" type="number" value=""></td>
+					<td class="actionbox"></td>
+				</tr>
+				<tr>
+					<td>Roll 3</td>
+					<td><input class="rollbox" type="number" value=""></td>
+					<td class="actionbox"></td>
+				</tr>
+			</table>
+		</div>
+	</body>
+
+	<script src="rolls.js"></script>
+	<script src="script.js"></script>
+	<script>init("data_yatzy", yatzyBoxNames);</script>
+</html>
