@@ -116,6 +116,8 @@ public class Solver
 				data[step + 2] = null;
 			}
 		}
+
+		FinalExpectedScore();
 	}
 
 	private int solveCount = 0;
@@ -285,6 +287,19 @@ public class Solver
 		{
 			LoadResult(step, boxset);
 		}
+	}
+
+	private void FinalExpectedScore()
+	{
+		var score = 0.0f;
+
+		foreach (var pair in Dice.FirstRoll())
+		{
+			score += pair.Value * data[0][ruleset.Boxes.FullBoxSet.bits][0, rollIndices[pair.Key]].value;
+		}
+
+		Console.WriteLine("==== Final expected score ====");
+		Console.WriteLine(score);
 	}
 }
 

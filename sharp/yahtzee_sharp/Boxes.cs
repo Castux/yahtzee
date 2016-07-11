@@ -52,6 +52,11 @@ public class Boxes
 		get { return new BoxSet(0, this); }
 	}
 
+	public BoxSet FullBoxSet
+	{
+		get { return new BoxSet(NumBoxSets - 1, this); }
+	}
+
 	public IEnumerable<BoxSet> AllBoxSets
 	{
 		get
