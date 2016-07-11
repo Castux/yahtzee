@@ -161,9 +161,7 @@ function onRollboxChanged(index)
 
 function getFormatedAction(step, roll, cb)
 {
-	var func = isYatzy() ? fetchDataBinary : fetchData;
-
-	func(step, roll, function(action, value)
+	fetchDataBinary(step, roll, function(action, value)
 	{
 		var phase = step % 3;
 		if(phase == 2)
@@ -178,39 +176,6 @@ function getFormatedAction(step, roll, cb)
 
 		cb(action + " (" + value.toFixed(2) + ")", keep == roll);
 	});
-}
-
-function fetchData(step, roll, cb)
-{
-	var url = "../" + data_path + "/step" + step + "/data" + boxset;
-	fetchURL(url, function(txt)
-	{
-		var arr = JSON.parse("[" + txt.slice(0,-1) + "]");
-
-		var up = Math.min(63, upper_total);
-
-		var index = (up * rolls.length + rollIndices[roll]) * 2;
-		var action = arr[index];
-		var value = arr[index + 1];
-
-		cb(action, value);
-	});
-}
-
-function fetchURL(url, cb)
-{
-	var xmlhttp = new XMLHttpRequest();
-	
-	xmlhttp.onreadystatechange = function()
-	{
-		if (xmlhttp.readyState == 4 && xmlhttp.status == 200)
-		{
-			cb(xmlhttp.responseText);
-		}
-	};
-
-	xmlhttp.open("GET", url, true);
-	xmlhttp.send();
 }
 
 function fetchDataBinary(step, roll, cb)
