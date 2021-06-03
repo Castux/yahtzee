@@ -7,6 +7,15 @@ Also included, the game of Yatzy, a popular variant in Scandinavia.
 - https://castux.github.io/yahtzee/yahtzee.html
 - https://castux.github.io/yahtzee/yatzy.html
 
+Usage:
+
+- Type the faces of your dice in the "Roll 1" field, (for instance "15536", the order does not matter) the UI will indicate which dice to keep (reroll the rest)
+- Repeat in boxes "Roll 2/3" until the UI tells you which box to score
+- Type your score in the relevant box in the upper side of the interface
+- Repeat until end of game :)
+
+Congrats, you have now beaten Yahtzee.
+
 Final expected score
 ====================
 
